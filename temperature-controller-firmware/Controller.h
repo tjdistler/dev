@@ -30,6 +30,7 @@ private:
     unsigned long _configVersion;
     bool _waitForStability;
     celsius_t _pidIntegralTerm;
+    DataSet<celsius_t, PID_DERIVATIVE_WINDOW_SIZE> _pidDerivativeSet;
     celsius_t _prevProcessVar;
     decision_t _currentDecision;
     PolledTimer _ascTimer;

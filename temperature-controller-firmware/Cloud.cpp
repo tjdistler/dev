@@ -155,7 +155,7 @@ void Cloud::publishState()
 {
     const Temperature::format_t format = _state->getFormat();
     
-    ThingSpeak.setField(1, _config->getSetpoint().get(format));
+    ThingSpeak.setField(1, _state->getAutoSetpoint().get(format));
     ThingSpeak.setField(2, _state->getProbeTemp(0).get(format));
     ThingSpeak.setField(3, _state->getOutputState());
     ThingSpeak.setField(4, _state->getPIDOutput());
@@ -225,7 +225,7 @@ void Cloud::_updateState()
 }
 
 
-// config - {sp:<celsius>,tl:<celsius>,asc:<ms>,o:[<celsius>,<celsius>],led:<int>,h:<0|1>,c:<0|1>,kp:<float>,ki:<float>,kd:<float>}
+// config - {sp:<celsius>,tl:<celsius>,asc:<ms>,o:[<celsius>,<celsius>],led:<int>,h:<0|1>,c:<0|1>,kp:<float>,ki:<float>,kd:<float>,aa:<0|1>,asp:<celsius>,atp:<hours>}
 int Cloud::_onSettingsCalled(String config)
 {
     // Prepare string for parsing
@@ -344,6 +344,42 @@ int Cloud::_onSettingsCalled(String config)
             _config->setPidKd(value);
     }
     
+    // Auto-adjust feature enabled
+    {
+        int value = 0;
+        int res = parseOption<int>(config, "aa:", ",", "Auto-adjust enabled", 0, 1, &value, _cloudError);
+        if (res == -1)
+            return -1;
+        else if (res == 1)
+        {
+            // Set the starting timestamp if we are enabling auto-adjusting.
+            if (!_config->getAutoAdjustEnabled() && value==1)
+                _config->setAutoAdjustStartTS( Time.now() );
+
+            _config->setAutoAdjustEnabled(value==1);
+        }
+    }
+    
+    // Auto-adjust target temp
+    {
+        celsius_t value;
+        int res = parseOption<celsius_t>(config, "asp:", ",", "Auto-adjust Target temperature", MIN_TEMP, MAX_TEMP, &value, _cloudError);
+        if (res == -1)
+            return -1;
+        else if (res == 1)
+            _config->setAutoSetpoint(value);
+    }
+    
+    // Auto-adjust time period (seconds)
+    {
+        unsigned long value = 0;
+        int res = parseOption<unsigned long>(config, "atp:", ",", "Auto-adjust time period", AUTO_ADJUST_TIME_MIN, AUTO_ADJUST_TIME_MAX, &value, _cloudError);
+        if (res == -1)
+            return -1;
+        else if (res == 1)
+            _config->setAutoTimePeriod( value==0 ? 1 : value ); // don't allow a zero value
+    }
+    
     _config->store();
     
     // Build 'settings' cloud variable string.
@@ -357,8 +393,12 @@ int Cloud::_onSettingsCalled(String config)
             _cloudSettings += ",";
         _cloudSettings += String(_config->getProbeOffset(ii).getRaw());
     }
-    _cloudSettings += String::format("],\"led\":%d,\"h\":%d,\"c\":%d,\"kp\":%.4f,\"ki\":%.4f,\"kd\":%.4f}", 
+    _cloudSettings += String::format("],\"led\":%d,\"h\":%d,\"c\":%d,\"kp\":%.4f,\"ki\":%.4f,\"kd\":%.4f,", 
         _config->getLEDLevel(), _config->getHeatEnabled()?1:0, _config->getCoolEnabled()?1:0, _config->getPidKp(), _config->getPidKi(), _config->getPidKd());
+        
+    _cloudSettings += String::format("\"aa\":%d,\"asp\":%d,\"atp\":%d}",
+        _config->getAutoAdjustEnabled()?1:0, _config->getAutoSetpoint().getRaw(), _config->getAutoTimePeriod());
+
     return 0;
 }
 

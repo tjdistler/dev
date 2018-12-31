@@ -18,6 +18,10 @@ class Config
         float Kp;
         float Ki;
         float Kd;
+        bool autoAdjustEnabled;
+        Temperature autoSetpoint;
+        unsigned long autoTimePeriod; // sec
+        unsigned long autoAdjustStartTS; // sec
     } config_t;
 
 public:
@@ -33,7 +37,11 @@ public:
             const bool coolEnabled,
             const float Kp,
             const float Ki,
-            const float Kd);
+            const float Kd,
+            const bool autoAdjustEnabled,
+            const Temperature autoSetpoint,
+            const unsigned long autoTimePeriod,
+            const unsigned long autoAdjustStartTS);
     
     Config& operator=(const Config& other)
     {
@@ -76,6 +84,18 @@ public:
     
     float getPidKd() const { return _config.Kd; }
     void setPidKd(float value) { ++_version; _config.Kd = value; }
+    
+    bool getAutoAdjustEnabled() const { return _config.autoAdjustEnabled; }
+    void setAutoAdjustEnabled(bool enabled) { ++_version; _config.autoAdjustEnabled = enabled; }
+    
+    Temperature getAutoSetpoint() const { return _config.autoSetpoint; }
+    void setAutoSetpoint(Temperature value) { ++_version; _config.autoSetpoint = value; }
+    
+    unsigned long getAutoTimePeriod() const { return _config.autoTimePeriod; }
+    void setAutoTimePeriod(unsigned long value) { ++_version; _config.autoTimePeriod = value; }
+    
+    unsigned long getAutoAdjustStartTS() const { return _config.autoAdjustStartTS; }
+    void setAutoAdjustStartTS(unsigned long value) { ++_version; _config.autoAdjustStartTS = value; }
     
 private:
     config_t _config;

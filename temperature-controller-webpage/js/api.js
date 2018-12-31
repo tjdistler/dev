@@ -176,7 +176,8 @@ function apiGetLastError(authToken, deviceID, cb) {
 
 //cb = function(error)
 function apiApplySettings(authToken, deviceID, setpoint, tolerance, asc, offset0, offset1, 
-                          ledLevel, heatEnabled, coolEnabled, Kp, Ki, Kd, cb) {
+                          ledLevel, heatEnabled, coolEnabled, Kp, Ki, Kd, autoAdjustEnabled,
+                          autoSetpoint, autoTimePeriod, cb) {
     try {
         // Limit the data length to conform to cloud limitations..
         var data1 = '{sp:' + setpoint + ',tl:' + tolerance + ',asc:' + asc + 
@@ -184,11 +185,18 @@ function apiApplySettings(authToken, deviceID, setpoint, tolerance, asc, offset0
         
         var data2 = '{h:' + (heatEnabled?1:0) + ',c:' + (coolEnabled?1:0) +
             ',kp:' + Kp + ',ki:' + Ki + ',kd:' + Kd + '}';
+
+        var data3 = '{aa:' + (autoAdjustEnabled?1:0) + ',asp:' + autoSetpoint +
+            ',atp:' + autoTimePeriod + '}';
         
         _apiApplySettings(authToken, deviceID, data1, function(err) {
             if (err)
                 return cb(err);
-            _apiApplySettings(authToken, deviceID, data2, cb);
+            _apiApplySettings(authToken, deviceID, data2, function(err) {
+                if (err)
+                    return cb(err);
+            	_apiApplySettings(authToken, deviceID, data3, cb);
+            });
         })
 
     }

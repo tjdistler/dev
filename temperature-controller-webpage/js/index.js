@@ -93,6 +93,9 @@ function onRefresh(alertUser) {
             var Ki = settings.ki;
             var Kd = settings.kd;
 
+            var autoSetpoint = CtoF(settings.asp);
+            var autoTimePeriod = StoH(settings.atp);
+
             $('#temp0').html(temp0);
             $('#temp1').html(temp1);
             $('#state').html(ctrlState);
@@ -111,6 +114,10 @@ function onRefresh(alertUser) {
             $('#inPidKp').val(Kp);
             $('#inPidKi').val(Ki);
             $('#inPidKd').val(Kd);
+
+            $('#inAutoAdjustEnabled').prop('checked', settings.aa == 1);
+            $('#inAutoSetpoint').val(autoSetpoint);
+            $('#inAutoTimePeriod').val(autoTimePeriod);
 
             enableRefreshBtn();
         });
@@ -135,23 +142,32 @@ function onApply() {
     var Kp          = $('#inPidKp').val();
     var Ki          = $('#inPidKi').val();
     var Kd          = $('#inPidKd').val();
+
+    var autoAdjustEnabled = $('#inAutoAdjustEnabled').is(':checked');
+    var autoSetpoint      = FtoC( $('#inAutoSetpoint').val() );
+    var autoTimePeriod    = HtoS( $('#inAutoTimePeriod').val() );
     
     if (tolerance < 0.5 * CELSIUS_SCALAR) {
         alert('Tolerance value too low!');
+        return;
+    }
+    if (autoTimePeriod < 1) {
+        alert('Auto-adjust time period is too low!');
         return;
     }
     
     localStorage.deviceID = deviceID;
     localStorage.authToken = authToken;
     
-    console.log('Values: ', deviceID, authToken, setpoint, tolerance, asc, offset0, offset1, ledLevel, heatEnabled, coolEnabled, Kp, Ki, Kd);
+    console.log('Values: ', deviceID, authToken, setpoint, tolerance, asc, offset0, offset1, ledLevel, heatEnabled,
+                coolEnabled, Kp, Ki, Kd, autoAdjustEnabled, autoSetpoint, autoTimePeriod);
     
     apiApplySettings(authToken, deviceID, setpoint, tolerance, asc, offset0, offset1, 
-                     ledLevel, heatEnabled, coolEnabled, Kp, Ki, Kd, function(err) {
+                     ledLevel, heatEnabled, coolEnabled, Kp, Ki, Kd, autoAdjustEnabled,
+                     autoSetpoint, autoTimePeriod, function(err) {
         
         if (err) {
             alert('Apply settings failed! ' + err);
-            enableRefreshBtn();
             return;
         }
     });
@@ -183,6 +199,14 @@ function MtoMS(M) {
 
 function MStoM(MS) {
     return (MS / 1000.0 / 60.0).toFixed(0);
+}
+
+function HtoS(H) {
+    return (H * 3600).toFixed(0);
+}
+
+function StoH(S) {
+    return (S / 3600.0).toFixed(0);
 }
 
 function toStateString(state) {

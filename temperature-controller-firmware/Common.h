@@ -22,27 +22,32 @@ const char DEGREE_CHAR = 0xdf;
 /**************************************
  * Default Controller Constants
  **************************************/
-const celsius_t     DEFAULT_SETPOINT    = FAHRENHEIT_TO_CELSIUS_T(70);
-const celsius_t     DEFAULT_TOLERANCE   = 5556;  // 1F
-const unsigned long DEFAULT_ASC         = 15 * 60 * 1000;
-const float         DEFAULT_KP          = 0.1;
-const float         DEFAULT_KI          = 0.98;
-const float         DEFAULT_KD          = 0.0;
-
-const float         TEMP_AVERAGE_EMA_ALPHA  = 0.000875; // TODO: Remove
+const celsius_t     DEFAULT_SETPOINT         = FAHRENHEIT_TO_CELSIUS_T(70);
+const celsius_t     DEFAULT_TOLERANCE        = 5556;  // 1F
+const unsigned long DEFAULT_ASC              = 15 * 60 * 1000;
+const float         DEFAULT_KP               = 0.75;
+const float         DEFAULT_KI               = 1000;
+const float         DEFAULT_KD               = 0.0;
+const unsigned long DEFAULT_AUTO_TIME_PERIOD = 24 * 3600; // seconds
 
 const unsigned long TEMPERATURE_READ_INTERVAL_MS    = 15 * 1000;
 const int           NUM_PROBE_ERRORS_ALLOWED        = 5;
 const size_t        PROBE_WINDOW_SIZE               = (60000 / TEMPERATURE_READ_INTERVAL_MS) * 3; // 3 mins
 
-const unsigned long TEMP_AVERAGE_WINDOW_SIZE_M      = 24 * 60; // 24hrs
+const unsigned long TEMP_AVERAGE_WINDOW_SIZE_M      = 12 * 60; // 12hrs
 const size_t        TEMP_AVERAGE_WINDOW_SAMPLES     = TEMP_AVERAGE_WINDOW_SIZE_M * (60000 / TEMPERATURE_READ_INTERVAL_MS);
+
+const unsigned long PID_DERIVATIVE_WINDOW_M         = 5; // 5 mins
+const size_t        PID_DERIVATIVE_WINDOW_SIZE      = PID_DERIVATIVE_WINDOW_M * (60000 / TEMPERATURE_READ_INTERVAL_MS);
+
+const float         TOLERANCE_PERCENTAGE_LIMIT      = 0.90f;
 
 const unsigned long UI_UPDATE_INTERVAL_MS           = 250;
 const unsigned long UI_BACKLIGHT_ON_MS              = 120 * 1000;
 const unsigned long UI_NO_WIFI_LED_BLINK_MS         = 850;
 const unsigned long UI_NO_INTERNET_LED_BLINK_MS     = 250;
 const unsigned long UI_ASC_BLINK_MS                 = 1000;
+const unsigned long UI_FIRWARE_UPDATE_BLINK_MS      = 500;
 
 // Thingspeak
 const unsigned long TS_CHANNEL_NUMBER   = 210613;
@@ -64,6 +69,8 @@ const celsius_t OFFSET_MAX = CELSIUS_TO_CELSIUS_T(10);
 const celsius_t OFFSET_MIN = CELSIUS_TO_CELSIUS_T(-10);
 const float PID_COEFF_MAX = 10000.0f;
 const float PID_COEFF_MIN = 0.0f;
+const unsigned long AUTO_ADJUST_TIME_MIN = 1;
+const unsigned long AUTO_ADJUST_TIME_MAX = 365*24*60*60; // one year
 
 
 /**************************************
@@ -170,17 +177,20 @@ const uint8_t CHECK_CHAR_ADDR = 4;
 
 
 /**************************************
- * Helper Runctions
+ * Helper Functions
  **************************************/
- template<class T>
- T range(const T value, const T high, const T low) {
+template<class T>
+T range(const T value, const T high, const T low) {
     T result = value;
     if (value > high)
         result = high;
     else if (value < low)
         result = low;
     return result;
- }
+}
+ 
+ 
+extern bool logToCloud(const char* message);
 
 
 
@@ -370,56 +380,99 @@ private:
 
 
 /**************************************
- * Simple Moving Average
+ * DataSet
  **************************************/
 template<class T, size_t windowSize>
-class SimpleMovingAverage
+class DataSet
 {
 public:
-    SimpleMovingAverage() : _ready(false), _next(0), _count(0) {}
+    DataSet() : _ready(false), _next(0), _count(0) {}
+    ~DataSet() {}
     
     bool ready() const { return _ready; }
     
-    void reset(const T value=0) {
+    size_t count() const { return _count; }
+    
+    void reset() {
         _ready = false;
         _next = 0;
         _count = 0;
-        _curSMA = value;
     }
     
-    // cur = prev + p(M)/n - p(M-n)/n
     void add(const T value) {
-        
-        const T oldest = _data[_next];
         _data[_next] = value; // Replace oldest value w/ newest.
         _next = (_next+1) % windowSize;
-        const size_t nextCount = _count >= windowSize ? windowSize : _count + 1;
-        
-        if (_count < windowSize ) {
-            // Calculate the full average.
-            T sum = 0;
-            for (size_t ii=0; ii<nextCount; ++ii)
-                sum += _data[ii];
-            _curSMA = sum / nextCount;
-        }
-        else {
-            // Calculate the moving average.
-            _curSMA = _curSMA + ( (value / _count) - (oldest / _count) );
-        }
-        
-        _count = nextCount;
+        _count = (_count >= windowSize) ? windowSize : (_count + 1);
         _ready = true;
-        
-        Serial.printf("value: %d, window: %d, count: %d, avg: %d\r\n", value.getRaw(), windowSize, _count, _curSMA.getRaw());
     }
     
-    T get() const { return _curSMA; }
+    T oldest() const {
+        if (_count >= windowSize)
+            return _data[_next];
+        return _data[0];
+    }
+    
+    T newest() const {
+        if (_next > 0)
+            return _data[_next-1];
+        return _data[windowSize-1];
+    }
+    
+    T get(const size_t index) const { return _data[index]; }
     
 private:
     bool _ready;
     T _data[windowSize];
     size_t _next;
     size_t _count;
+};
+
+
+
+
+/**************************************
+ * Simple Moving Average
+ **************************************/
+template<class T, size_t windowSize>
+class SimpleMovingAverage : public DataSet<T, windowSize>
+{
+    typedef DataSet<T, windowSize> Base;
+    
+public:
+    SimpleMovingAverage() : Base() {}
+    ~SimpleMovingAverage() {}
+    
+    bool ready() const { return Base::ready(); }
+    
+    void reset(const T value=0) {
+        Base::reset();
+        _curSMA = value;
+    }
+    
+    // cur = prev + p(M)/n - p(M-n)/n
+    void add(const T value) {
+        
+        if (Base::count() < windowSize)
+        {
+            // Calculate the full average.
+            T sum = 0;
+            for (size_t ii=0; ii<Base::count(); ++ii)
+                sum += Base::get(ii);
+            sum += value;
+            _curSMA = sum / (Base::count() + 1);
+        }
+        else
+        {
+            // Calculate the moving average.
+            _curSMA = _curSMA + ( (value / windowSize) - (Base::oldest() / windowSize) );
+        }
+        
+        Base::add(value);
+    }
+    
+    T get() const { return _curSMA; }
+    
+private:
     T _curSMA;
 };
 
@@ -434,6 +487,7 @@ class ExponentialMovingAverage
 public:
     // alpha - [0.0, 1.0] - Degree of weighted decrease. Higher values discount older samples faster.
     ExponentialMovingAverage(const float alpha) : _alpha(alpha), _initialized(false) {}
+    ~ExponentialMovingAverage() {}
     
     void reset() {
         _initialized = false;

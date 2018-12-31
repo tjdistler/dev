@@ -15,7 +15,7 @@ STARTUP(WiFi.selectAntenna(ANT_EXTERNAL));
 
 #define VERSION_MAJOR   0
 #define VERSION_MINOR   8
-#define VERSION_BUILD   1
+#define VERSION_BUILD   6
 
 
 /**************************************
@@ -45,6 +45,17 @@ void coolOn();
 void coolOff();
 void updateSettings();
 void onFwUpdate(system_event_t event, int param, void* data);
+
+
+
+bool logToCloud(const char* message)
+{
+    char msg[256];
+    strncpy(msg, message, 255);
+    msg[255] = '\0';
+
+    return Particle.publish("ctrl-log", msg, 60, PRIVATE);
+}
  
 
 void setup()

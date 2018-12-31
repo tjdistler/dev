@@ -153,6 +153,9 @@ void UI::_onStateSplash()
 
 void UI::_updateStatusLEDsAndIcons()
 {
+    if (_uiState == UPDATING)
+        return;
+
     // Status LED
     LED& statusLED = _hw->led(Hardware::STATUS_LED);
     if (!WiFi.ready())
@@ -275,6 +278,10 @@ void UI::onFirmwareUpdate(system_event_t event, int param, void* data)
         int row = (LCD_ROWS / 2) - 1;
         _lcd->setCursor(col, row);
         _lcd->print(text);
+        
+        _hw->led(Hardware::RED_LED).off();
+        _hw->led(Hardware::BLUE_LED).off();
+        _hw->led(Hardware::STATUS_LED).blink(UI_FIRWARE_UPDATE_BLINK_MS);
         break;
     }
     case firmware_update_progress:

@@ -18,7 +18,11 @@ void Controller::setup(Config* config, State* state)
     _config = config;
     _state  = state;
     
+    _state->setAutoSetpoint( _config->getSetpoint() );
+    
     _configVersion = _config->version();
+    
+    _averageTemp.reset(Temperature::UNDEFINED);
     
     _ascTimer.setInterval(_config->getAsc());
     _ascTimer.restart();
@@ -30,16 +34,41 @@ Controller::decision_t Controller::compute(const Temperature currentTemp)
     // Reset parameters if config has changed
     if (_configVersion != _config->version())
     {
-        _averageTemp.reset();
+        _averageTemp.reset(Temperature::UNDEFINED);
         _prevProcessVar = Temperature::UNDEFINED;
         _pidIntegralTerm = 0;
+        _pidDerivativeSet.reset();
         _ascTimer.setInterval(_config->getAsc());
         _waitForStability = true;
         _configVersion = _config->version();
     }
+    
+    celsius_t setpoint = _config->getSetpoint().getRaw();
+    if (_config->getAutoAdjustEnabled())
+    {
+        // Dynamically calculate the setpoint if auto-adjust is enabled
+        float deltaTime = Time.now() - _config->getAutoAdjustStartTS();
+        
+        float percent = deltaTime / (float)_config->getAutoTimePeriod();
+        if (percent >= 1.0)
+        {
+            // Auto-adjust is complete, so set the new setpoint and disable auto-adjust
+            _config->setSetpoint( _config->getAutoSetpoint() );
+            _config->setAutoAdjustEnabled( false );
+            _config->setAutoAdjustStartTS( 0 );
+            percent = 1.0; // limit changes to 100%
+        }
+        
+        Temperature deltaTemp = _config->getAutoSetpoint().getRaw() - _config->getSetpoint().getRaw();
+        setpoint = setpoint + (deltaTemp.getRaw() * percent);
+        
+        logToCloud(String::format("dtmp:%d, dt:%f, p:%f, st:%d", deltaTemp.getRaw(), deltaTime, percent, setpoint));
+    }
+    
+    // Update the dynamic state (not to be confused with the config)
+    _state->setAutoSetpoint(setpoint);
 
     const celsius_t current = currentTemp.getRaw();
-    const celsius_t setpoint = _config->getSetpoint().getRaw();
     const celsius_t tolerance = _config->getTolerance().getRaw();
     const celsius_t toleranceMax = setpoint + tolerance;
     const celsius_t toleranceMin  = setpoint - tolerance;
@@ -50,6 +79,9 @@ Controller::decision_t Controller::compute(const Temperature currentTemp)
 
     float controlVariable = 0;
     celsius_t processVariable = Temperature::UNDEFINED;
+    float P = 0;
+    float I = 0;
+    float D = 0;
     if (!_waitForStability)
     {
         // Calculate moving average and use as the PID process variable.
@@ -62,24 +94,27 @@ Controller::decision_t Controller::compute(const Temperature currentTemp)
             // Ideal PID algorithm: Kp * [ e(t) + 1/Ki * integral(e(t)d(t)) + Kd * d*e(t)/d(t)]
             
             processVariable = _averageTemp.get().getRaw();
-            const float error = processVariable - setpoint;
+            P = processVariable - setpoint;
             
             if (_prevProcessVar == Temperature::UNDEFINED)
                 _prevProcessVar = processVariable;
         
-            _pidIntegralTerm += error;
-            
-            //TODO: Limit integral term???
-        
-            float I = 0;
+            // Integral
             if (_config->getPidKi() != 0)
-                I = (1.0 / _config->getPidKi()) * _pidIntegralTerm;
+            {
+                _pidIntegralTerm += P;
+                I = _pidIntegralTerm / _config->getPidKi();
+            }
+                
+            // Derivative
+            _pidDerivativeSet.add(P);
+            D = _config->getPidKd() * (_pidDerivativeSet.newest() - _pidDerivativeSet.oldest());
         
-            controlVariable = _config->getPidKp() * ( error + I ); // + (_config->getPidKd() * (current - _prevProcessVar));
+            controlVariable = _config->getPidKp() * ( P + I + D );
             _prevProcessVar = processVariable;
             
-            // Limit output to tolerance range
-            controlVariable = range<float>(controlVariable, tolerance, -1 * tolerance);
+            // Limit output to a percentage of the tolerance range
+            controlVariable = range<float>(controlVariable, tolerance * TOLERANCE_PERCENTAGE_LIMIT, tolerance * -TOLERANCE_PERCENTAGE_LIMIT);
             
             _state->setAverageTemp(_averageTemp.get());
             _state->setPIDOutput(controlVariable);
@@ -90,8 +125,11 @@ Controller::decision_t Controller::compute(const Temperature currentTemp)
     const celsius_t toleranceHigh = range(adjustedSetpoint + tolerance, toleranceMax, toleranceMin);
     const celsius_t toleranceLow  = range(adjustedSetpoint - tolerance, toleranceMax, toleranceMin);
 
-    Serial.printf("PID: pv: %d, setpoint: %d, tolerance: %d, cv: %.2f, adjusted: %d\r\n",
-        processVariable, setpoint, tolerance, controlVariable, adjustedSetpoint);
+    Serial.printf("PID: raw: %d, pv: %d, setpoint: %d, tolerance: %d, cv: %.2f, adjusted: %d, P: %.2f, I: %.2f, D: %.2f\r\n",
+        current, processVariable, setpoint, tolerance, controlVariable, adjustedSetpoint, P, I, D);
+    
+    logToCloud(String::format("PID: raw: %d, pv: %d, setpoint: %d, tolerance: %d, cv: %.2f, adjusted: %d, P: %.2f, I: %.2f, D: %.2f",
+        current, processVariable, setpoint, tolerance, controlVariable, adjustedSetpoint, P, I, D));
     
     // Update decision
     switch (_currentDecision)

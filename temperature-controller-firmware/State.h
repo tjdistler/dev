@@ -37,6 +37,9 @@ public:
     void setPIDOutput(const float output) { ++_version; _pidOutput = output; }
     float getPIDOutput() const { return _pidOutput; }
     
+    void setAutoSetpoint(const Temperature value) { ++_version; _autoSetpoint = value; }
+    Temperature getAutoSetpoint() const { return _autoSetpoint; }
+    
 private:
     unsigned long _version;
     Temperature::format_t _format;
@@ -45,6 +48,7 @@ private:
     output_state_t _outputState;
     Temperature _avgTemp;
     float _pidOutput;
+    Temperature _autoSetpoint; // if auto-adjust is being used.
 };
 
 #endif

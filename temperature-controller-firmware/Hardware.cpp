@@ -33,6 +33,9 @@ void LED::setLevel(const float level)
         _level = 1.0;
     else if (_level < 0.0)
         _level = 0.0;
+        
+    if (_isOn)
+        _on();
 }
 
     

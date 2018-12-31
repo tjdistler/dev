@@ -2,7 +2,7 @@
 
 
 const size_t BASE_ADDR = 0;
-const uint32_t FLASH_MAGIC = 0xcc3cf2e9; // Magic number indicating if Flash data is valid.
+const uint32_t FLASH_MAGIC = 0xcc3cf2ec; // Magic number indicating if Flash data is valid.
 
 
 /**************************************
@@ -41,7 +41,11 @@ Config::Config() :
              true,
              DEFAULT_KP,
              DEFAULT_KI,
-             DEFAULT_KD }),
+             DEFAULT_KD,
+             false,
+             DEFAULT_SETPOINT,
+             DEFAULT_AUTO_TIME_PERIOD,
+             0}),
     _version(0)
 {
 }
@@ -56,8 +60,12 @@ Config::Config( const Temperature setpoint,
                 const bool coolEnabled,
                 const float Kp,
                 const float Ki,
-                const float Kd) :
-    _config({setpoint, tolerance, ascMs, {offset0, offset1}, ledLevel, heatEnabled, coolEnabled, Kp, Ki, Kd}),
+                const float Kd,
+                const bool autoAdjustEnabled,
+                const Temperature autoSetpoint,
+                const unsigned long autoTimePeriod,
+                const unsigned long autoAdjustStartTS) :
+    _config({setpoint, tolerance, ascMs, {offset0, offset1}, ledLevel, heatEnabled, coolEnabled, Kp, Ki, Kd, autoAdjustEnabled, autoSetpoint, autoTimePeriod, autoAdjustStartTS}),
     _version(0)
 {
 }

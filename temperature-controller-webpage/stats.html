@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Controller</title>
+ 
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+        <link rel="stylesheet" type="text/css" href="css/lib/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="css/index.css">
+        
+        <script src="js/lib/jquery.js"></script>
+        <script src="js/lib/bootstrap.js"></script>
+        <script src="js/lib/moment.js"></script>
+        <script src="js/lib/jstat.js"></script>
+        <script src="js/lib/plotly-basic.min.js"></script>
+        
+        <script src="js/api.js"></script>
+        <script src="js/stats.js"></script>
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <a class="btn btn-default center-block back-button" href="index.html">
+                    <span class="glyphicon glyphicon-chevron-left"></span>
+                    Back
+                </a>
+                <br>
+            </div>
+            
+            <div class="row center-block">
+                <div id="time-btn-group" class="btn-group" role="group">
+                </div>
+                <br>
+                <br>
+            </div>
+            
+            <div class="row">
+                <div class="col-xs-6">
+                    <h4 class="stats-label">Current: <span id="statCurrent" class="stats-value"></span></h4>
+                    <h4 class="stats-label">Min: <span id="statMin" class="stats-value"></span></h4>
+                    <h4 class="stats-label">Range: <span id="statRange" class="stats-value"></span></h4>
+                    <h4 class="stats-label">Stdev: <span id="statStdev" class="stats-value"></span></h4>
+                </div>
+                
+                <div class="col-xs-6">
+                    <h4 class="stats-label">EMA: <span id="statExpAverage" class="stats-value"></span></h4>
+                    <h4 class="stats-label">Max: <span id="statMax" class="stats-value"></span></h4>
+                    <h4 class="stats-label">Average: <span id="statAverage" class="stats-value"></span></h4>
+                    <h4 class="stats-label">Variance: <span id="statVariance" class="stats-value"></span></h4>
+                </div>
+            </div>
+            
+            <hr>
+            
+            <div id="status" class="row status">
+            </div>
+            
+            <div id="chart1Div" class="row">
+            </div>
+            
+            <div id="chart2Div" class="row">
+            </div>
+
+            <div id="chart3Div" class="row">
+            </div>
+        </div>
+    </body>
+</html>

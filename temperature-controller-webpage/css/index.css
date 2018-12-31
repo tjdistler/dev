@@ -1,0 +1,75 @@
+/* Application-specific stylesheet */
+
+.temp0 {
+    font-size: 5em;
+    padding-left: 25px;
+}
+
+.temp1 {
+    font-size: 3em;
+    padding-left: 20px;
+    margin-top: 0px;
+}
+
+.refresh-button {
+    margin-top: 25px;
+}
+
+.spinner {
+    width: 15px;
+    display: none;
+}
+
+.stats-button {
+    width: 50%;
+}
+
+.form-div {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.form-group label {
+    padding-left: 30px;
+    padding-top: 5px;
+}
+
+/* Overrides for mobile checkbox style */
+.form-group .input-group .mobile-checkbox {
+    width: 100px;
+    border-radius: 4px;
+}
+.form-group .input-group .mobile-checkbox:checked {
+    background-color: #337ab7;
+}
+
+.apply-button {
+    margin-top: 10px;
+    width: 75%;
+}
+
+.footer-row {
+    height: 50px;
+}
+
+
+/* STATS.HTML */
+.btn-group .data-time-btn {
+    width: 49px;
+}
+
+.stats-label {
+    font-size: 1.1em;
+}
+
+.stats-value {
+    font-size: 1.2em;
+    float: right;
+}
+
+.status p {
+    font-size: 0.85em;
+    margin: 0 auto;
+    margin-left: 20px;
+    color: darkgray;
+}

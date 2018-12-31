@@ -1,0 +1,7 @@
+/* Application-specific stylesheet */
+
+.form-question {
+    float: right;
+    top: -25px;
+    left: -10px;
+}

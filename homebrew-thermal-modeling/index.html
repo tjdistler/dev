@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Thermal Model</title>
+ 
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="css/lib/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="css/index.css">
+
+        <script src="js/lib/jquery.js"></script>
+        <script src="js/lib/moment.js"></script>
+        <script src="js/lib/chart.js"></script>
+        <script src="js/lib/bootstrap.js"></script>
+
+        <script src="js/heater.js"></script>
+        <script src="js/chiller.js"></script>
+        <script src="js/fermenter.js"></script>
+        <script src="js/controller.js"></script>
+        <script src="js/simulator.js"></script>
+        <script src="js/index.js"></script>
+    </head>
+    <body>
+
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                      <a class="navbar-brand" href="#">
+                          <a class="navbar-brand" href="#">Fermentation Thermal Modeling</a>
+                      </a>
+                </div>
+            </div>
+        </nav>
+        
+        
+        <div class="container">
+
+            <div class="row">
+                
+                <!-- **** SETTINGS: LEFT COLUMN **** -->
+                <div class="col-md-6">
+                    
+                    <form class="form-horizontal" onsubmit="formDoNothing(); return false;">
+                        
+                        <div class="form-group">
+                            <label for="beerVolume" class="control-label col-xs-4">Beer volume:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="beerVolume" value="20.75">
+                                <span class="input-group-addon">liters</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The total volume of beer in the fermentation vessel."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="beerStartTemp" class="control-label col-xs-4">Beer temperature:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="beerStartTemp" value="20">
+                                <span class="input-group-addon">&deg;C</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The temperature of the beer at the beginning of the simulation."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="externalStartTemp" class="control-label col-xs-4">External temperature:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="externalStartTemp" value="15">
+                                <span class="input-group-addon">&deg;C</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The temperature outside the fermentation vessel at the beginning of the simulation."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="targetTemp" class="control-label col-xs-4">Target temperature:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="targetTemp" value="20">
+                                <span class="input-group-addon">&deg;C</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The desired fermentation temperature."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="tolerance" class="control-label col-xs-4">Temperature tolerance:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="tolerance" value="0.5">
+                                <span class="input-group-addon">&deg;C</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The allowed temperature tolerance (hysteresis)."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="asc" class="control-label col-xs-4">Anit-short-cycle:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="asc" value="30">
+                                <span class="input-group-addon">minutes</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="How long to wait between turning an output off and turning another one on."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="runtime" class="control-label col-xs-4">Simulation runtime:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="runtime" value="3600">
+                                <span class="input-group-addon">minutes</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="How long the simulation should model."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="stepTime" class="control-label col-xs-4">Simulation step time:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="stepTime" value="60">
+                                <span class="input-group-addon">seconds</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The time interval between simulation output calculations."></span>
+                        </div>
+                        
+                    </form>
+                    
+                    <br>
+                    <button onclick="runSimulation()" type="button" class="btn btn-primary">Run Simulation</button>
+                    
+                </div>
+                
+                
+                <!-- **** SETTINGS: RIGHT COLUMN **** -->
+                <div class="col-md-6">
+                    
+                    <form class="form-horizontal" onsubmit="formDoNothing(); return false;">
+                        
+                        <div class="form-group">
+                            <label for="chillerVolume" class="control-label col-xs-4">Chiller volume:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="chillerVolume" value="1">
+                                <span class="input-group-addon">m<sup>3</sup></span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The total volume of the chiller. It's assumed the chiller is filled with air."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chillerOutput" class="control-label col-xs-4">Chiller output:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="chillerOutput" value="-250">
+                                <span class="input-group-addon">watts</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The maximum energy output of the chiller."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="heaterOutput" class="control-label col-xs-4">Heater output:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="heaterOutput" value="250">
+                                <span class="input-group-addon">watts</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The maximum energy output of the heater after the given rise time."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="heaterRiseTime" class="control-label col-xs-4">Heater rise time:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="heaterRiseTime" value="300">
+                                <span class="input-group-addon">seconds</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The time it takes for the heater to reach full output from room temperature."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="heaterContact" class="control-label col-xs-4">Heater contact:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="heaterContact" value="50">
+                                <span class="input-group-addon">%</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The percentage of the heater that is in contact with the fermentation vessel."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fermentationHeat" class="control-label col-xs-4">Fermentation heat:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="fermentationHeat" value="0.01">
+                                <span class="input-group-addon">watts</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The amount of energy the fermentation process generates."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="thermalConductivity" class="control-label col-xs-4">Fermenter thermal conductivity:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="thermalConductivity" value="0.5">
+                                <span class="input-group-addon">W/m/&deg;C</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The thermal conductivity of the fermentation vessel. This is used to determine the heat transfer rate."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="surfaceArea" class="control-label col-xs-4">Fermenter surface area:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="surfaceArea" value="0.329">
+                                <span class="input-group-addon">m<sup>2</sup></span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The total area that the beer contacts the surface of the fermenter."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="surfaceThickness" class="control-label col-xs-4">Fermenter surface thickness:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="surfaceThickness" value="0.01">
+                                <span class="input-group-addon">m</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The thickness of the fermenter surface material."></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="surfaceExposed" class="control-label col-xs-4">Fermenter surface exposure:</label>
+                            <div class="input-group col-xs-7">
+                                <input type="text" class="form-control" id="surfaceExposed" value="50">
+                                <span class="input-group-addon">%</span>
+                            </div>
+                            <span class="form-question glyphicon glyphicon-question-sign" data-toggle="popover" 
+                                  data-content="The percentage of the fermenter surface that is exposed to the external environment."></span>
+                        </div>
+                        
+                    </form>
+                    
+                </div>
+                
+            </div>
+            
+            <div class="row">
+                <div class="progress">
+                    <div id="progress" class="progress-bar" role="progressbar" aria-valuenow="10%" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+            
+            <!-- **** GRAPHS *** -->
+            <div class="row">
+                <hr>
+                <div id="temperatureChartDiv"></div>
+            </div>
+            
+            <div class="row">
+                <hr>
+                <div id="pidOutputChartDiv"></div>
+            </div>
+            
+            
+            <div class="row">
+                <hr>
+                <div id="heaterOutputChartDiv"></div>
+            </div>
+            
+            <div class="row">
+                <hr>
+                <div id="chamberTempChartDiv"></div>
+            </div>
+            
+            
+            <!-- **** EXPLANATIONS *** -->
+            <div class="row">
+                <hr>
+                <h2>Reference</h2>
+                <ul>
+                    <li><p><b>1 Watt = 1 joule/second</b></p></li>
+                    <li><p><b>1 Calorie = 4.184 joules</b></p></li>
+                    <li><p><b>1 BTU = 252 calories</b></p></li>
+                    <li><p><b>1 gallon = 3.785 liters</b></p></li>
+                    <li><p><b>1 liter of water = 998.2 grams</b> (at 20&deg;C)</p><br></li>
+                    
+                    
+                    <li>
+                        <p><b>Fahrenheit to Celsius:</b> T<sub>&degC</sub> = (T<sub>&deg;F</sub> - 32) x 1.8</p>
+                        <br>
+                    </li>
+                    
+                    <li>
+                        <p><b>Calorie:</b> The amount of energy needed to raise 1 gram of water 1 degree Celsius.</p>
+                        <p>An important relationship between energy, mass, and temperature of water is: <b>calories = mT<sub>&Delta;</sub></b></p>
+                        <p>where:</p>
+                        <ul>
+                            <li>m = mass of water (grams)</li>
+                            <li>T<sub>&Delta;</sub> = temperature of water (&deg;C)</li>
+                        </ul>
+                        <br>
+                        <p>Thus, the amount of temperature change of water per energy input is: <b>T<sub>&Delta;</sub> = calories/m</b></p>
+                        <br>
+                    </li>
+                    
+                    <li>
+                        <p><b>Specific heat (c):</b> The amount of energy per unit mass required to raise the temperature by 1 degree Celsius.</p>
+                        <p>The relationship between heat and temperature changes is: <b>Q = cmT<sub>&Delta;</sub></b></p>
+                        <p>where:</p>
+                        <ul>
+                            <li>Q = Amount of energy added. The units are determined by the specific heat parameter.</li>
+                            <li>c = Specific heat (e.g. joule/gram or calorie/gram).</li>
+                            <li>m = Mass (grams).</li>
+                            <li>T<sub>&Delta;</sub> = The difference between the starting and ending temperature.</li>
+                        </ul>
+                        <br>
+                        <p>Thus, the change in temperature for a given energy input can be expressed as: <b>T<sub>&Delta;</sub> = Q / cm</b></p>
+                        <p>Since the specific heat of water is 1 calorie/gram, this equation matches the equation for temperature change derived for calories above.</p>
+                        <br>
+                    </li>
+                    
+                    <li>
+                        <p><b>Heat transfer rate (Q):</b>The rate at which energy is transfered between 2 materials separated by a barrier.</p>
+                        <p>The transfer rate is calculated as: <b>Q = kA(T<sub>1</sub>-T<sub>2</sub>) / d</b></p>
+                        <p>where:</p>
+                        <ul>
+                            <li>Q = The heat transfer rate (Watts)</li>
+                            <li>k = Thermal conductivity of the barrier material (W/m/&deg;C)</li>
+                            <li>A = Surface area of barrier (m<sup>2</sup>)</li>
+                            <li>T<sub>1</sub> = Temperature of material 1 (&deg;C)</li>
+                            <li>T<sub>2</sub> = Temperature of material 2 (&deg;C)</li>
+                            <li>d = Thickness of barrier (m)</li>
+                        </ul>
+                        <br>
+                    </li>
+                    
+                    <li>
+                        <p><b>Relevant constants:</b></p>
+                        <ul>
+                            <li>Thermal conductivity of glass: <b>1.05 W/m/&deg;C</b>.</li>
+                            <li>Specific heat of water: <b>1 calorie/gram &deg;C</b> (4.186 joule/gram &deg;C)</li>
+                            <li>Side surface area of a 6 gallon carboy: <b>0.329 m<sup>2</sup></b> (assumes 36cm fluid height)</li>
+                            <li>Thickness of a 6 gallon carboy: <b>0.01 m</b></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>      
+
+    </body>
+</html>

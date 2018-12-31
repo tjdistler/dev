@@ -1,0 +1,14 @@
+html, body { height: 100%; width: 100% }
+
+.row { 
+    display: flex;
+}
+
+.column {
+    margin: 10px 10px 10px 10px;
+}
+
+#viewport {
+    border: solid;
+    border-width: 1px;
+}

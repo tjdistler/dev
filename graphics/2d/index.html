@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>Graphics pipeline</title>
+  <meta name="description" content="3D graphics pipeline">
+  <meta name="author" content="Tom Distler">
+
+  <link href="jsoneditor/dist/jsoneditor.min.css" rel="stylesheet" type="text/css">
+  <link rel="stylesheet" href="css/index.css">
+  
+
+  <!--[if lt IE 9]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.js"></script>
+  <![endif]-->
+</head>
+
+<body>
+  <div class="row">
+    <div class="column" style="width: 320px">
+      <canvas id="viewport" width="320" height="240"></canvas>
+      <input type="checkbox" id="loop_checkbox" onchange="onLoopCheckboxClick();"> Loop<br>
+      <label id="zoom_label">Zoom (25px): </label>
+      <input id="zoom_slider" type="range" min="1" max="50" value="25" onchange="onZoomSliderChange()">
+    </div>
+    <div class="column">
+      <div id="jsoneditor" style="width: 700px; height: 400px;"></div>
+    </div>
+    <div class="column">
+      <button onclick="onJsonUpdateClick();">Update</button>
+    </div>
+  </div>
+    
+  <script src="jsoneditor/dist/jsoneditor-minimalist.min.js"></script>
+
+  <script src="default_scene.js"></script>
+
+  <script src="js/utils.js"></script>
+  <script src="js/vector2d.js"></script>
+  <script src="js/vector3d.js"></script>
+  <script src="js/matrix2d.js"></script>
+  <script src="js/scene.js"></script>
+  <script src="js/viewport.js"></script>
+  <script src="js/animator.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Controller</title>
+ 
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+        <link rel="stylesheet" type="text/css" href="css/lib/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="css/lib/mobilecheckbox.css">
+        <link rel="stylesheet" type="text/css" href="css/index.css">
+        
+        <script src="js/lib/jquery.js"></script>
+        <script src="js/lib/bootstrap.js"></script>
+        <script src="js/lib/moment.js"></script>
+        
+        <script src="js/api.js"></script>
+        <script src="js/index.js"></script>
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <h1 id="temp0" class="text-center temp0">--</h1>
+                <h2 id="temp1" class="text-center text-muted temp1">--</h2>
+                <h4 id="state" class="text-center">--</h4>
+                <button id="refreshBtn" onclick="onRefresh(true); return false;" class="btn btn-success center-block refresh-button">
+                    Refresh
+                    <img id="refreshSpinner" class="spinner" src="img/spinner.gif">
+                </button>
+                <hr>
+                <a class="btn btn-default center-block stats-button" href="stats.html">Statistics
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                </a>
+                <hr>
+            </div>
+            
+            <div class="row form-div">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label for="inDeviceID" class="col-xs-5 col-sm-2 control-label">Device ID:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="text" class="form-control" id="inDeviceID" placeholder="Device ID">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inAuthToken" class="col-xs-5 col-sm-2 control-label">Auth Token:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="text" class="form-control" id="inAuthToken" placeholder="Auth Token">
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="form-group">
+                        <label for="inSetpoint" class="col-xs-5 col-sm-2 control-label">Setpoint:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="number" class="form-control" id="inSetpoint" placeholder="&deg;F">
+                            <span class="input-group-addon">&deg;F</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inTolerance" class="col-xs-5 col-sm-2 control-label">Tolerance:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="number" class="form-control" id="inTolerance" placeholder="&deg;F">
+                            <span class="input-group-addon">&deg;F</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inASC" class="col-xs-5 col-sm-2 control-label">ASC:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="number" class="form-control" id="inASC" placeholder="Minutes">
+                            <span class="input-group-addon">Min</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inOffset0" class="col-xs-5 col-sm-2 control-label">Offset [0]:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="number" class="form-control" id="inOffset0" placeholder="&deg;F">
+                            <span class="input-group-addon">&deg;F</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inOffset1" class="col-xs-5 col-sm-2 control-label">Offset [1]:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="number" class="form-control" id="inOffset1" placeholder="&deg;F">
+                            <span class="input-group-addon">&deg;F</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inLEDLevel" class="col-xs-5 col-sm-2 control-label">LED <span id="ledPercent">50%</span>:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input onchange="onLEDLevelChange();" type="range" min="0" max="100" class="form-control" id="inLEDLevel">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inHeatEnabled" class="col-xs-5 col-sm-2 control-label">Heating:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="checkbox" class="form-control mobile-checkbox" id="inHeatEnabled">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inCoolEnabled" class="col-xs-5 col-sm-2 control-label">Cooling:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="checkbox" class="form-control mobile-checkbox" id="inCoolEnabled">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="inPidKp" class="col-xs-5 col-sm-2 control-label">PID Kp:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="number" class="form-control" id="inPidKp">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inPidKi" class="col-xs-5 col-sm-2 control-label">PID Ki:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="number" class="form-control" id="inPidKi">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inPidKd" class="col-xs-5 col-sm-2 control-label">PID Kd:</label>
+                        <div class="col-xs-6 col-sm-8 input-group">
+                            <input type="number" class="form-control" id="inPidKd">
+                        </div>
+                    </div>
+                    
+                    <div class="col-xs-12">
+                        <button onclick="onApply(); return false;" class="btn btn-primary center-block apply-button">Apply</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="row footer-row">
+            </div>
+        </div>
+    </body>
+</html>

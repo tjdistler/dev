@@ -213,7 +213,7 @@ Vector.prototype.dotProduct = function(vector)
 
 
 // Calculate the cross product (i.e. finds the vector perpendicular to the plane
-// defined by A and B). Returns a new Vector.
+// defined by vectors A and B). Returns a new Vector.
 Vector.prototype.crossProduct = function(vector)
 {
     if (Array.isArray(vector))

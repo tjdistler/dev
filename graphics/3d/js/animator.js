@@ -1,6 +1,6 @@
 function Animator(viewport, scene)
 {
-    this.scene = new Scene(scene);
+    this.scene = new Scene(scene, viewport);
     this.viewport = viewport;
     
     this.viewport.setFont('12px Courier New');
@@ -75,7 +75,7 @@ Animator.prototype.timerCb = function()
 // Renders the scene to the viewport for the given scene time.
 Animator.prototype.renderNextFrame = function(sceneTime)
 {
-    var vertexCount = this.scene.render(sceneTime, this.viewport);
+    var vertexCount = this.scene.render(sceneTime);
     
     // Draw Heads-up-Display
     if (this.hud)

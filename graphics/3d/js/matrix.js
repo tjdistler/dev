@@ -108,4 +108,3 @@ Matrix.prototype.multiply = function(matrix)
         return new Matrix(result);
     }
 }
-

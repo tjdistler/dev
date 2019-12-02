@@ -2,13 +2,17 @@
 
 
 //--------------------------------
-// Render State
+// RenderConstants
 //
-// This data is passed to the shaders as the 'renderer' argument.
+// This data is passed to the shaders as the 'constants' argument.
 //--------------------------------
-function RenderState()
+function RenderConstants(viewMatrix)
 {
-    //TODO
+    this.viewMatrix = viewMatrix;
+}
+
+RenderConstants.prototype.getViewMatrix = function() {
+    return this.viewMatrix;
 }
 
 
@@ -31,6 +35,8 @@ Renderer.prototype.reset = function()
     this.camera = null;
     this.vertShader = null;
     this.vertArgs = null;
+    this.vertShaderCb = null;
+    this.vertexShaderCbArgs = null;
     this.fragShader = null;
     this.fragArgs = null;
     this.textures = null;
@@ -62,30 +68,33 @@ Renderer.prototype.setCamera = function(camera)
 
 /* Set the vertex and fragment shaders for rendering.
  *
- * vertShader - A function that will be called for every vertex.
- *      The function must have the form function(vertex[3], args, state),
- *      where 'vertex' is the array of Vertex of a triangle to operate on,
- *      'args' is the 'vertArgs' passed into the setShaders call, and
- *      'state' is a RenderState object for interacting with the render
- *      engine. The shader function must a valid Vertex array.
+ * vertShader - TODO
  * vertArgs - A user-defined object to pass to the vertex shader on
  *      each invocation.
- * fragShader - A function that will be called for every fragment.
- *      The function must have the form function(fragment, args, state),
- *      where 'fragment' is the Fragment to operate on, 'args' is the
- *      'fragArgs' passed into the setShaders call, and 'state' is a
- *      RenderState object for interacting with the render engine. The
- *      shader function must return an array of Color objects, where the
- *      first Color object will be written to buffer[0] of the execute()
- *      call, etc. If the returned Color array is shorter than the buffer
- *      list, then only the first n entries will be written. If an entry in
- *      the Color array is null, then that buffer will be skipped.
+ * fragShader - TODO
  * fragArgs - A user-defined object to pass to the fragment shader on
  *      each invocation.
  */
 Renderer.prototype.setShaders = function(vertShader, vertArgs, fragShader, fragArgs)
 {
+    this.vertShader = vertShader;
+    this.vertArgs = vertArgs;
+    
     //TODO
+}
+
+/*
+ * Shader callbacks provide a way for the application to get access to data at 
+ * intermediate stages in the pipeline.
+ *
+ * vertexShaderCb - function(triangles) - A function that will be called with the
+ *          resulting triangles output from the vertex shader.
+ * vertexShaderCbArgs - User defined object to pass to the callback.
+ */
+Renderer.prototype.setShaderCallbacks = function(vertexShaderCb, vertexShaderCbArgs)
+{
+    this.vertexShaderCb = vertexShaderCb;
+    this.vertexShaderCbArgs = vertexShaderCbArgs;
 }
 
 
@@ -107,21 +116,43 @@ Renderer.prototype.setTextures = function(textures)
  *      to the buffers are defined by the shaders.
  */
 Renderer.prototype.execute = function(options, buffers)
-{
-    this._transformToViewSpace();
+{    
+    // Setup render constants for the shaders
+    var constants = new RenderConstants(this.camera.viewMatrix);
     
-    //TODO
+    // Run vertex shader
+    var vertexShaderOutput = this.triangles;
+    if (this.vertShader) {
+        vertexShaderOutput = this._executeVertexShader(this.triangles, this.vertShader, constants, this.vertArgs);
+        if (this.vertexShaderCb)
+            this.vertexShaderCb(vertexShaderOutput, this.vertexShaderCbArgs);
+    }
+    
+    //TODO - Rasterize
+    
+    //TODO - Run fragment shader
 }
 
 
-/*
- * Transforms all the vertices to view space.
- */
-Renderer.prototype._transformToViewSpace = function()
+Renderer.prototype._executeVertexShader = function(triangles, shader, constants, args)
 {
-    this.triangles.forEach(function(triangle, index) {
-        this.triangles[index][0].pos = triangle[0].pos.transform(this.camera.viewMatrix);
-        this.triangles[index][1].pos = triangle[1].pos.transform(this.camera.viewMatrix);
-        this.triangles[index][2].pos = triangle[2].pos.transform(this.camera.viewMatrix);
-    }, this);
+    var shaderOutput = [];
+    
+    // Loop over each triangle...
+    triangles.forEach(function(triangle, triIndex) {
+
+        logTriangleVertices('Before Vertex Shader[' + triIndex + ']: ', triangle);
+
+        // Each triangle is defined as [Vertex,Vertex,Vertex]. Loop over each vertex...
+        var outputTriangle = [];
+        triangle.forEach(function(vertex, vertIndex) {
+            outputTriangle[vertIndex] = shader(vertex, constants, args);
+        });
+        
+        shaderOutput[triIndex] = outputTriangle;
+
+        logTriangleVertices('After Vertex Shader[' + triIndex + ']: ', outputTriangle);
+    });
+    
+    return shaderOutput
 }

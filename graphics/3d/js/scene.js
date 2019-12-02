@@ -1,40 +1,39 @@
 // Represents a scene to render. A scene contains all the information needed
 // to render and animate the ojects in the scene.
 //
-// data - The scene object to render
-function Scene(scene)
+// scene - The scene object to render
+// viewport = The HTML viewport to render to
+function Scene(scene, viewport)
 {
     this.scene = scene;
+    this.viewport = viewport;
     this.fps = this.scene.fps;
     this.duration = this.scene.duration;
     
     this.renderer = new Renderer();
     this.renderer.setShaders(VertShaderGouraud, {}, FragShaderGouraud, {});
+    this.renderer.setShaderCallbacks(vertexShaderCallback, this.viewport);
 }
 
 
 /* Renders the scene to the specified buffer using the render API.
  *
  * sceneTime - Time (in milliseconds) in the scene to render.
- * buffer - The ImageData buffer to render the scene into. The pixel format
- *      is assumed to be 4-byte RGBA data.
  *
  * Returns the number of verticies rendered.
  */
-Scene.prototype.render = function(sceneTime, viewport)
+Scene.prototype.render = function(sceneTime)
 {
     // Setup the render state.
     this.renderer.setCamera( this._getCamera(sceneTime) );
     this.renderer.setLights( this._getLights(sceneTime) );
     
-    var vertices = this._getWorldSpaceVertices(sceneTime);
-    this.renderer.setVertices(vertices);
+    var triangles = this.generateFrameGeometry(sceneTime);
+    this.renderer.setVertices(triangles);
 
     this.renderer.execute({rasterize:false}, []);
-    
-    this._renderWireframe(vertices, viewport);
         
-    return vertices.length * 3;
+    return triangles.length * 3;
 }
 
 
@@ -63,24 +62,10 @@ Scene.prototype._getLights = function(sceneTime)
 }
 
 
-/* Transforms the scene geometry into a list of triangles in world space.
- *
- * sceneTime - Time (in milliseconds) in the scene to render.
- *
- * Returns an array of triangle Vertex objects of the form:
- *  [ [[Vertex,Vertex,Vertex], [Vertex,Vertex,Vertex], [Vertex,Vertex,Vertex]], ...]
- */
-Scene.prototype._getWorldSpaceVertices = function(sceneTime)
-{
-    //TODO
-    return this.generateFrameGeometry(sceneTime);
-}
-
-
 // Returns an array of triangles (in world space) to be rendered. This function
 // performs all vertex transformations into world space.
 // sceneTime - ms since the beginning of the scene.
-// Return value in the form [ [[x,y],[x,y],[x,y]], [...], ... ]
+// Return value in the form [ [[Vertex,Vertex,Vertex],[Vertex,Vertex,Vertex],[Vertex,Vertex,Vertex]], [...], ... ]
 Scene.prototype.generateFrameGeometry = function(sceneTime)
 {
     var output = [];
@@ -96,9 +81,9 @@ Scene.prototype.generateFrameGeometry = function(sceneTime)
             return;
 
         // All transformations happen on a copy of the object geometry.
-        var triangles = deepCopy(obj.triangles);
+        var triangles = this.copyVertices(obj.triangles);
 
-        // Process each transform in the object.
+        // Process each transform in object space.
         obj.transforms.forEach(function(transform) {
 
             // Is it time to apply the transform yet?
@@ -113,7 +98,9 @@ Scene.prototype.generateFrameGeometry = function(sceneTime)
 
             var transformTime = sceneTime - transBegin;
             var transformLen = transEnd - transBegin;
-            var transformPercentage = Math.min(transformTime / transformLen, 1.0);
+            var transformPercentage = 1.0;
+            if (transformLen != 0)
+                transformPercentage = Math.min(transformTime / transformLen, 1.0);
     
             if (transform.type == 'rotate')
             {
@@ -165,12 +152,49 @@ Scene.prototype.generateFrameGeometry = function(sceneTime)
     return output;
 }
 
+// Creates one Vertex object for each triangle defined in the scene file.
+// Returns [[Vertex,Vertex,Vertex], ...]
+Scene.prototype.copyVertices = function(triangles) {
+    var result = [];
+    
+    // Process each triangle...
+    triangles.forEach(function(triangle, index) {
+        var triangleVertices = [];
+        
+        // Calculate the surface normal incase vertex normals aren't provided
+        var normal = new Vector(triangle[0].pos).crossProduct(triangle[1].pos).normalize();
+        
+        // Process each vertex...
+        triangle.forEach(function(vertex, index) {            
+            var vertexObject = new Vertex();
+            
+            // Set 'w' to 1 if not defined
+            vertexObject.setPosition(new Vector(vertex.pos));
+            if (vertexObject.pos.w == 0)
+                vertexObject.pos.w = 1.0;
+            
+            vertexObject.setColor(new Vector(vertex.color));
+            
+            // 'normal' is an optional parameter
+            if (vertex.normal)
+                vertexObject.setNormal(new Vector(vertex.normal));
+            else
+                vertexObject.setNormal(normal);
+            
+            triangleVertices[index] = vertexObject;
+        }, this);
+        
+        result[index] = triangleVertices;
+    }, this);
+    
+    return result;
+}
 
 // Rotates all of the verticies of the given triangle.
 Scene.prototype.rotate = function(dx, dy, dz, triangle)
 {
     triangle.forEach(function(vertex, index) {
-        triangle[index].pos = new Vector(vertex.pos).rotate(dx, dy, dz);
+        triangle[index].pos = vertex.pos.rotate(dx, dy, dz);
     }, this);    
     return triangle;
 }
@@ -179,7 +203,7 @@ Scene.prototype.rotate = function(dx, dy, dz, triangle)
 Scene.prototype.scale = function(dx, dy, dz, triangle)
 {
     triangle.forEach(function(vertex, index) {
-        triangle[index].pos = new Vector(vertex.pos).scale(dx, dy, dz);
+        triangle[index].pos = vertex.pos.scale(dx, dy, dz);
     }, this);
     return triangle;
 }
@@ -188,20 +212,25 @@ Scene.prototype.scale = function(dx, dy, dz, triangle)
 Scene.prototype.translate = function(dx, dy, dz, triangle)
 {
     triangle.forEach(function(vertex, index) {
-        triangle[index].pos = new Vector(vertex.pos).translate(dx, dy, dz);
+        triangle[index].pos = vertex.pos.translate(dx, dy, dz);
     }, this);
     return triangle;
 }
 
 
-// Renders the scene as a wireframe
-Scene.prototype._renderWireframe = function(vertices, viewport)
+// Renders the output of the vertex shader
+vertexShaderCallback = function(triangles, viewport)
 {
+    renderWireframe(triangles, viewport);
+}
+
+// Renders the scene as a wireframe
+renderWireframe = function(triangles, viewport) 
+{    
     viewport.clear('#000');
     
     // Draw each triangle
-    for (ii=0; ii<vertices.length; ++ii) {
-        var triangle = vertices[ii];
+    triangles.forEach(function(triangle) {        
         var a = viewport.mapToViewport(new Vector(triangle[0].pos), 25);
         var b = viewport.mapToViewport(new Vector(triangle[1].pos), 25);
         var c = viewport.mapToViewport(new Vector(triangle[2].pos), 25);
@@ -209,5 +238,5 @@ Scene.prototype._renderWireframe = function(vertices, viewport)
         viewport.drawLine(a.x, a.y, b.x, b.y, '#fff', 1); 
         viewport.drawLine(b.x, b.y, c.x, c.y, '#fff', 1);
         viewport.drawLine(c.x, c.y, a.x, a.y, '#fff', 1);      
-    };
+    }, this);
 }

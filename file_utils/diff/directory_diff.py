@@ -1,6 +1,6 @@
 # Output the difference (at the directory level, not individual files) between 2 manifest files.
 #
-# Usage: python directory_diff.py <file1> <file2>
+# Usage: python directory_diff.py <manifest1> <manifest2>
 
 import datetime
 import sys
@@ -10,7 +10,7 @@ import manifesto
 start_time = datetime.datetime.now()
 
 if len(sys.argv) != 3:
-    print("Usage: python directory_diff.py <file1> <file2>")
+    print("Usage: python directory_diff.py <manifest1> <manifest2>")
     exit(1)
 
 file1 = sys.argv[1]

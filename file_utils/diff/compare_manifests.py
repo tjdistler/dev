@@ -1,6 +1,6 @@
 # Compares 2 manifest files for equality.
 #
-# Usage: python compare_manifests.py <file1> <file2>
+# Usage: python compare_manifests.py <manifest1> <manifest2>
 
 import datetime
 import sys
@@ -9,7 +9,7 @@ import manifesto
 start_time = datetime.datetime.now()
 
 if len(sys.argv) != 3:
-    print("Usage: python compare_manifests.py <file1> <file2>")
+    print("Usage: python compare_manifests.py <manifest1> <manifest2>")
     exit(1)
 
 file1 = sys.argv[1]

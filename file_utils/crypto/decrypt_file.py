@@ -3,7 +3,6 @@
 # will be removed.
 #
 # Usage: python decrypt_file.py <file_name>
-# Requires: pycryptodome (pip install pycryptodome)
 
 import os
 import sys

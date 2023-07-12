@@ -6,21 +6,12 @@
 # previous and next images (sorted alphabetically).
 #
 # Usage: python sort_by_year.py <source_dir> <target_dir>
-#
-# Requires exiftool (brew install exiftool)
-# Requires Pillow (python3 -m pip install --upgrade Pillow)
-# Requires Pillow-heif:
-#   https://pypi.org/project/pillow-heif/
-#   `brew install x265 libjpeg libde265 libheif`
-#   `python3 -m pip install --upgrade pillow-heif --no-binary :all:`
 
 import sys
 import os
 import csv
 import shutil
-import subprocess
-from PIL import Image
-from pillow_heif import HeifImagePlugin
+import utils
 
 UNKNOWN_DIR = "Unknown"
 
@@ -29,8 +20,8 @@ def guess_year(prev_file, next_file):
     if prev_file is None or next_file is None:
         return None
     
-    prev_year = get_exif_creation_year(prev_file)
-    next_year = get_exif_creation_year(next_file)
+    prev_year = utils.get_exif_creation_year(prev_file)
+    next_year = utils.get_exif_creation_year(next_file)
     if prev_year == next_year:
         return prev_year
     return None
@@ -41,35 +32,6 @@ def copy_file_to_directory(file, directory):
         os.mkdir(directory)
     filename = os.path.basename(file)
     shutil.copyfile(file, os.path.join(directory, filename))
-
-# Uses the EXIF data to get the year the image/video was taken. Returns the year
-# as a string or None if not available.
-def get_exif_creation_year(file):
-    creation_year = None
-
-    # Start by calling out to exiftool (most reliable and supporting)
-    EXIFTOOL_CREATION_DATE_TAG = "Creation Date"
-    EXIFTOOL_CREATE_DATE_TAG = "Create Date"
-    process = subprocess.Popen(["exiftool", file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    out, err = process.communicate()
-    lines = out.decode("utf-8").split("\n")
-    for line in lines:
-        if line.startswith(EXIFTOOL_CREATION_DATE_TAG):
-            creation_year = line.split(":")[1].strip() # Prefer this entry
-            break
-        elif line.startswith(EXIFTOOL_CREATE_DATE_TAG) and creation_year is None:
-            creation_year = line.split(":")[1].strip() # Fallback to this entry
-
-    # If creation_year is still None, then try the Pillow library.
-    if creation_year is None:
-        image = Image.open(file)
-        exif = image.getexif()
-        if exif is not None:
-            dt_original = exif.get(306)
-            if dt_original is not None:
-                creation_year = dt_original[0:4]
-    
-    return creation_year
 
 
 if __name__ == "__main__":
@@ -101,7 +63,7 @@ if __name__ == "__main__":
     for idx,file in enumerate(files):
         try:
             full_path = os.path.join(source_dir, file)
-            creation_year = get_exif_creation_year(full_path)
+            creation_year = utils.get_exif_creation_year(full_path)
         
             # If the EXIF data is not available, then attempt to guess the year by looking
             # at the files surrounding it.
@@ -113,7 +75,7 @@ if __name__ == "__main__":
                     prev_file = os.path.join(source_dir, files[idx - 1])
                 if idx < len(files) - 1:
                     next_file = os.path.join(source_dir, files[idx + 1])
-                guess = guess_year(prev_file, next_file)
+                guess = utils.guess_year(prev_file, next_file)
                 unknown_files.append([file, str(guess), os.path.basename(str(prev_file)), os.path.basename(str(next_file))])
                 copy_file_to_directory(full_path, unknown_dir)
             else:

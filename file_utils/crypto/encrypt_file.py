@@ -3,7 +3,6 @@
 # will be removed.
 #
 # Usage: python encrypt_file.py <file_name>
-# Requires: pycryptodome (pip install pycryptodome)
 
 import json
 import os

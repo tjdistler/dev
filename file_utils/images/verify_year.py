@@ -34,9 +34,9 @@ if __name__ == '__main__':
         if os.path.isdir(os.path.join(directory, file)):
             continue
         try:
-            sys.stdout.write("({}/{}) Checking {}".format(idx, file, target_year))
+            sys.stdout.write("({}/{}) Checking {}".format(idx, len(files), file))
             year = utils.get_exif_creation_year(os.path.join(directory, file))
-            if year is None or year == target_year:
+            if year is None or len(year) == 0 or year == "0000" or year == target_year:
                 print()
                 continue
             else:

@@ -67,6 +67,10 @@ def encrypt_file(key_obj, infile, outfile):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print(" Usage: python encrypt_file.py <file_name>")
+        sys.exit(1)
+
     infile = sys.argv[1]
     key = utils.prompt_for_key()
     print(" Setting up key...")

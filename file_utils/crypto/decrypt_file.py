@@ -74,6 +74,10 @@ def decrypt_file(infile, outfile, key=None, key_obj=None):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python decrypt_file.py <file_name>")
+        sys.exit(1)
+
     infile = sys.argv[1]
     decrypt_file(infile, os.path.splitext(infile)[0])
     os.remove(infile)

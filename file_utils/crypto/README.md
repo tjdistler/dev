@@ -1,2 +1,2 @@
 # Requirements
-- pycryptodome: `pip install pycryptodome`
+- pycryptodome: `pip3 install pycryptodomex`

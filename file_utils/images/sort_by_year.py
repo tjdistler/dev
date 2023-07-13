@@ -75,7 +75,7 @@ if __name__ == "__main__":
                     prev_file = os.path.join(source_dir, files[idx - 1])
                 if idx < len(files) - 1:
                     next_file = os.path.join(source_dir, files[idx + 1])
-                guess = utils.guess_year(prev_file, next_file)
+                guess = guess_year(prev_file, next_file)
                 unknown_files.append([file, str(guess), os.path.basename(str(prev_file)), os.path.basename(str(next_file))])
                 copy_file_to_directory(full_path, unknown_dir)
             else:

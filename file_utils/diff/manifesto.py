@@ -6,6 +6,7 @@ import hashlib
 import os
 import sys
 
+CHUNK_SIZE = 1024 * 1024 * 1024 # 1 GiB
 
 # Build a manifest from the contents of a directory. Manifest format: {filename: hash}
 def create(directory):
@@ -106,7 +107,9 @@ def _hash_files(directory, files):
 
         # Calculate the SHA-1 hash of the file.
         hash = hashlib.sha1()
-        hash.update(open(directory + "/" + file, "rb").read())
+        with open(os.path.join(directory, file), "rb") as f:
+            for chunk in iter(lambda: f.read(CHUNK_SIZE), b""):
+                hash.update(chunk)
         files[file] = hash.hexdigest();
     print("\r   Hashed " + str(len(files)) + " files - Total duration: " + str(datetime.datetime.now() - start_time))
     return files;

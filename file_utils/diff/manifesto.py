@@ -11,8 +11,9 @@ CHUNK_SIZE = 1024 * 1024 * 1024 # 1 GiB
 # Build a manifest from the contents of a directory. Manifest format: {filename: hash}
 def create(directory):
     print("Building manifest from directory: " + directory + "...")
-    manifest = _get_file_list(directory)
-    return _hash_files(directory, manifest)
+    realpath = os.path.realpath(directory)
+    manifest = _get_file_list(realpath)
+    return _hash_files(realpath, manifest)
 
 
 # Write a manifest to a file. Manifest format: {filename: hash}
@@ -91,7 +92,7 @@ def _get_file_list(directory):
         root = root[len(directory)+1:]
         for file in files:
             # Add file to dictionary but set the hash to None for now
-            all_files[root + "/" + file] = None
+            all_files[os.path.join(root, file)] = None
             _console_overwrite("   " + str(len(all_files)))
     print("\r   Found " + str(len(all_files)) + " files           ")
     return all_files;

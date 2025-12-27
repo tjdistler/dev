@@ -6,7 +6,7 @@ import pytest
 import torch
 
 from data import GPTDataset, create_dataloader
-from tokenizer import GPTTokenizer
+from gpt.tokenizer import GPTTokenizer
 
 
 class TestGPTDataset:

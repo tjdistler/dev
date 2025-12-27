@@ -10,7 +10,7 @@ from tqdm import tqdm
 from gpt.model import GPT
 from gpt.config import GPTConfig
 from gpt.data import create_dataloader
-from tokenizer import GPTTokenizer
+from gpt.tokenizer import GPTTokenizer
 
 
 def train(model, dataloader, optimizer, device, num_epochs=1):

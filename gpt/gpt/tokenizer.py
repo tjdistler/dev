@@ -1,14 +1,17 @@
 """
 Tokenizer for GPT-1.
 
-Handles text tokenization and detokenization.
+Handles text tokenization and detokenization using Hugging Face's OpenAIGPTTokenizer.
 """
+
+from transformers import OpenAIGPTTokenizer
 
 
 class GPTTokenizer:
     """
     Tokenizer for GPT-1 model.
     
+    Wrapper around Hugging Face's OpenAIGPTTokenizer for GPT-1 compatibility.
     Handles conversion between text and token indices.
     """
     
@@ -17,12 +20,10 @@ class GPTTokenizer:
         Initialize tokenizer.
         
         Args:
-            vocab_file: Path to vocabulary file (optional)
+            vocab_file: Path to vocabulary file (optional, not used with HF tokenizer)
         """
-        # TODO: Load vocabulary if vocab_file provided
-        # TODO: Create token-to-id and id-to-token mappings
-        # TODO: Initialize special tokens (if any)
-        pass
+        # Load the pre-trained GPT-1 tokenizer from Hugging Face
+        self._tokenizer = OpenAIGPTTokenizer.from_pretrained('openai-gpt')
     
     def encode(self, text):
         """
@@ -34,10 +35,7 @@ class GPTTokenizer:
         Returns:
             List of token indices
         """
-        # TODO: Tokenize text
-        # TODO: Convert tokens to indices
-        # TODO: Return list of token indices
-        pass
+        return self._tokenizer.encode(text)
     
     def decode(self, token_ids):
         """
@@ -49,14 +47,10 @@ class GPTTokenizer:
         Returns:
             Decoded text string
         """
-        # TODO: Convert indices to tokens
-        # TODO: Join tokens into text
-        # TODO: Return decoded text
-        pass
+        return self._tokenizer.decode(token_ids)
     
     @property
     def vocab_size(self):
         """Return vocabulary size."""
-        # TODO: Return size of vocabulary
-        pass
+        return len(self._tokenizer)
 

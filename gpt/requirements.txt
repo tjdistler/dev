@@ -1,7 +1,10 @@
 # Python dependencies
 torch>=2.0.0
-numpy>=1.24.0
+numpy>=1.24.0,<2.0.0  # Pin to NumPy 1.x for PyTorch compatibility
 tqdm>=4.65.0
 pytest>=7.4.0
 pytest-cov>=4.1.0
+transformers>=4.0.0
+ftfy>=6.0.0  # For better text normalization in tokenizer
+urllib3<2.0.0  # Pin to v1.x for LibreSSL compatibility on macOS
 
